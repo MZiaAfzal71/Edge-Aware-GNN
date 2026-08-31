@@ -1,6 +1,6 @@
 # Edge-Aware Molecular Property Benchmark
 
-This repository evaluates whether explicit bond-aware message passing and global molecular features improve **out-of-distribution molecular property prediction**. The revised project extends the original ESOL study to the physical-chemistry regression suite in MoleculeNet:
+This repository evaluates whether explicit bond-aware message passing and global molecular features improve **out-of-distribution molecular property prediction** across the physical-chemistry regression suite in MoleculeNet:
 
 | Dataset | Predicted property | Approximate size | Unit | Primary split |
 |---|---|---:|---|---|
@@ -8,13 +8,7 @@ This repository evaluates whether explicit bond-aware message passing and global
 | FreeSolv | Hydration free energy | 642 | kcal/mol | Random, with scaffold stress test |
 | Lipophilicity | Octanol/water distribution coefficient | 4,200 | logD at pH 7.4 | Scaffold |
 
-The scope is now a hypothesis-driven comparison across related but distinct physicochemical endpoints, not a single-dataset model demonstration. Dataset names and loaders follow the [PyTorch Geometric MoleculeNet collection](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.datasets.MoleculeNet.html).
-
-## Important validity notice
-
-`Models/` and `Results/` preserve the original notebook study for traceability. Those historical values should **not** be used as final article results. The audit found that the old workflow combined validation and test molecules in scaffold experiments, fitted some preprocessing before splitting, reversed the arguments of `r2_score` in several paths, labeled independent runs as an ensemble, and displayed unadjusted Wilcoxon p-values as adjusted values. The new `src/` pipeline corrects these issues and writes the information needed to audit every prediction.
-
-See [Validation Audit](docs/VALIDATION_AUDIT.md) and [Research Roadmap](docs/RESEARCH_ROADMAP.md) before rerunning experiments.
+The scope is a hypothesis-driven comparison across related but distinct physicochemical endpoints. Dataset names and loaders follow the [PyTorch Geometric MoleculeNet collection](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.datasets.MoleculeNet.html). See the [Research Roadmap](docs/RESEARCH_ROADMAP.md) for the hypotheses, analyses, and manuscript outputs.
 
 ## What the revised benchmark tests
 
@@ -47,11 +41,8 @@ Every run has disjoint train, validation, calibration, and test partitions. Vali
 configs/benchmark.yaml       Full multi-dataset experiment matrix
 src/edge_aware_gnn/          Reusable data, feature, model, metric, and runner code
 tests/                       Fast correctness tests
-docs/                        Scientific audit and manuscript-oriented roadmap
-ESOL Dataset/                Historical ESOL files
-Models/                      Historical Colab notebooks (legacy)
-Results/                     Historical result tables (legacy)
-outputs/                     New generated metrics and predictions (not committed)
+docs/                        Manuscript-oriented research roadmap
+outputs/                     Generated metrics and predictions (not committed)
 ```
 
 ## Installation
@@ -65,11 +56,7 @@ python -m pip install --upgrade pip
 python -m pip install -e '.[boosting,dev]'
 ```
 
-For CUDA, install the appropriate PyTorch build for the machine first, then run the final command. Chemprop is retained as a literature baseline but is intentionally outside the core ablation pipeline; install it only when reproducing that baseline:
-
-```bash
-python -m pip install -e '.[chemprop]'
-```
+For CUDA, install the appropriate PyTorch build for the machine first, then run the final command.
 
 ## Commands
 
@@ -148,7 +135,6 @@ This long-form prediction output enables paired bootstrap analysis, applicabilit
 - Apply Holm correction within each predeclared family of pairwise tests.
 - Call multiple trained models an ensemble only after their predictions are actually averaged.
 - Keep random-split results as a secondary in-distribution reference; make scaffold results primary for ESOL and Lipophilicity.
-- Do not mix the historical notebook metrics with revised-pipeline metrics in one table.
 
 ## Recommended paper direction
 
