@@ -1,0 +1,13 @@
+# Install the project itself for the tested core stack:
+#   python -m pip install -e .
+# Optional published baselines:
+#   python -m pip install -e '.[boosting,chemprop]'
+numpy>=1.26,<3
+pandas>=2.1,<3
+PyYAML>=6,<7
+rdkit>=2024.3
+scikit-learn>=1.4,<2
+scipy>=1.12,<2
+torch>=2.2,<3
+torch-geometric>=2.5,<3
+
