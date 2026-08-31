@@ -1,0 +1,64 @@
+project: edge-aware-physical-chemistry
+data_root: data/raw
+output_root: outputs
+
+# Three single-task MoleculeNet regression datasets test whether conclusions
+# transfer beyond aqueous solubility.
+datasets:
+  - esol
+  - freesolv
+  - lipophilicity
+
+models:
+  - name: mean_baseline
+    family: mean
+    features: none
+  - name: rf_rdkit
+    family: random_forest
+    features: rdkit
+  - name: rf_rdkit_morgan
+    family: random_forest
+    features: rdkit+morgan
+  - name: xgb_rdkit_morgan
+    family: xgboost
+    features: rdkit+morgan
+  - name: node_gnn
+    family: node_gnn
+    features: none
+    fusion: none
+  - name: edge_gnn
+    family: edge_gnn
+    features: none
+    fusion: none
+  - name: hybrid_concat
+    family: edge_gnn
+    features: rdkit
+    fusion: concat
+  - name: hybrid_gated
+    family: edge_gnn
+    features: rdkit
+    fusion: gated
+
+split:
+  strategies: [random, scaffold]
+  seeds: [2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035]
+  fractions: [0.70, 0.10, 0.10, 0.10]
+
+features:
+  morgan_radius: 2
+  morgan_bits: 2048
+  max_missing_fraction: 0.10
+  variance_threshold: 0.0
+  correlation_threshold: 0.95
+
+training:
+  batch_size: 64
+  hidden_dim: 128
+  layers: 3
+  dropout: 0.15
+  learning_rate: 0.001
+  weight_decay: 0.00001
+  max_epochs: 250
+  patience: 30
+  num_workers: 0
+  conformal_alpha: 0.10
