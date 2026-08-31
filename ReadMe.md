@@ -29,7 +29,7 @@ Feature engineering is fitted on training molecules only:
 
 - categorical atom embeddings for atomic number, degree, charge, hydrogen count, hybridization, chirality, valence, radicals, aromaticity, and ring membership;
 - one-hot bond type and stereochemistry plus conjugation and ring indicators;
-- RDKit descriptor missingness filtering, median imputation, variance filtering, high-correlation pruning, and standardization;
+- RDKit descriptor missingness filtering, median imputation, variance filtering, high-correlation pruning, standardization, and bounded outlier handling;
 - optional 2,048-bit radius-2 Morgan fingerprints;
 - target normalization learned from the training partition only.
 
@@ -87,6 +87,11 @@ Run the complete benchmark:
 ```bash
 edgegnn run --config configs/benchmark.yaml
 ```
+
+Runs resume by default: a complete run directory with finite predictions is skipped, while an
+interrupted or invalid run is recomputed. This makes it safe to repeat the command after a Kaggle
+session interruption. To intentionally recompute the selected experiment matrix, add `--restart`.
+Other result rows are preserved when selected runs are restarted.
 
 Aggregate test metrics and create Holm-adjusted paired comparisons:
 

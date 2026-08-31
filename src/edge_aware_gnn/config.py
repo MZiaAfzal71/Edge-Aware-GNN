@@ -31,6 +31,7 @@ DEFAULTS: dict[str, Any] = {
         "max_missing_fraction": 0.10,
         "variance_threshold": 0.0,
         "correlation_threshold": 0.95,
+        "standardized_clip": 10.0,
     },
     "training": {
         "batch_size": 64,
@@ -85,6 +86,9 @@ def validate_config(cfg: dict[str, Any]) -> None:
     names = [model["name"] for model in cfg["models"]]
     if len(names) != len(set(names)):
         raise ValueError("Every model must have a unique name")
+
+    if float(cfg["features"]["standardized_clip"]) <= 0:
+        raise ValueError("features.standardized_clip must be positive")
 
 
 def describe_plan(config: dict[str, Any]) -> dict[str, Any]:

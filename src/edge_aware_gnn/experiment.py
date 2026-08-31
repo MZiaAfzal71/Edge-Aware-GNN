@@ -27,6 +27,8 @@ from .features import build_feature_transformer, make_graph_dataset
 from .metrics import regression_metrics
 from .models import EdgeAwareRegressor, count_parameters
 
+RESULT_KEY = ("dataset", "split_strategy", "seed", "model", "partition")
+
 
 @dataclass(frozen=True)
 class TargetScaler:
@@ -100,13 +102,23 @@ def _device() -> torch.device:
 
 
 @torch.no_grad()
-def _predict(model: nn.Module, loader: DataLoader, device: torch.device) -> tuple[np.ndarray, np.ndarray]:
+def _predict(
+    model: nn.Module,
+    loader: DataLoader,
+    device: torch.device,
+    *,
+    context: str = "prediction",
+) -> tuple[np.ndarray, np.ndarray]:
     model.eval()
     truth: list[np.ndarray] = []
     predictions: list[np.ndarray] = []
     for batch in loader:
         batch = batch.to(device)
-        predictions.append(model(batch).detach().cpu().numpy().reshape(-1))
+        output = model(batch)
+        if not torch.isfinite(output).all():
+            bad = int((~torch.isfinite(output)).sum().item())
+            raise FloatingPointError(f"Non-finite model output during {context}: {bad} values")
+        predictions.append(output.detach().cpu().numpy().reshape(-1))
         truth.append(batch.y.detach().cpu().numpy().reshape(-1))
     return np.concatenate(truth), np.concatenate(predictions)
 
@@ -132,15 +144,28 @@ def _train_gnn(
     started = time.perf_counter()
     for epoch in range(1, int(options["max_epochs"]) + 1):
         model.train()
-        for batch in train_loader:
+        for batch_number, batch in enumerate(train_loader, start=1):
             batch = batch.to(device)
             optimizer.zero_grad(set_to_none=True)
-            loss = criterion(model(batch), batch.y.reshape(-1))
+            output = model(batch)
+            if not torch.isfinite(output).all():
+                raise FloatingPointError(
+                    f"Non-finite model output at epoch {epoch}, batch {batch_number}"
+                )
+            loss = criterion(output, batch.y.reshape(-1))
+            if not torch.isfinite(loss):
+                raise FloatingPointError(f"Non-finite loss at epoch {epoch}, batch {batch_number}")
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5.0)
+            gradient_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5.0)
+            if not torch.isfinite(gradient_norm):
+                raise FloatingPointError(
+                    f"Non-finite gradient norm at epoch {epoch}, batch {batch_number}"
+                )
             optimizer.step()
 
-        validation_truth, validation_pred = _predict(model, validation_loader, device)
+        validation_truth, validation_pred = _predict(
+            model, validation_loader, device, context=f"validation epoch {epoch}"
+        )
         validation_loss = float(np.mean((validation_truth - validation_pred) ** 2))
         if validation_loss < best_loss - 1e-8:
             best_loss = validation_loss
@@ -165,9 +190,19 @@ def _result_rows(
     rows: list[dict[str, Any]] = []
     for partition in PARTITIONS:
         mask = frame["partition"].to_numpy() == partition
-        values = regression_metrics(frame.loc[mask, "target"], predictions[mask])
         truth = frame.loc[mask, "target"].to_numpy(dtype=float)
         prediction = predictions[mask]
+        bad_truth = int((~np.isfinite(truth)).sum())
+        bad_prediction = int((~np.isfinite(prediction)).sum())
+        if bad_truth or bad_prediction:
+            molecule_ids = frame.loc[mask & ~np.isfinite(predictions), "molecule_id"].head(5).tolist()
+            raise FloatingPointError(
+                "Non-finite evaluation values for "
+                f"dataset={metadata['dataset']}, split={metadata['split_strategy']}, "
+                f"seed={metadata['seed']}, model={metadata['model']}, partition={partition}: "
+                f"y_true={bad_truth}, y_pred={bad_prediction}; molecule_ids={molecule_ids}"
+            )
+        values = regression_metrics(truth, prediction)
         coverage = float(np.mean(np.abs(truth - prediction) <= conformal_radius))
         rows.append(
             {
@@ -290,7 +325,21 @@ def run_one(
         predictions = np.empty(len(work), dtype=float)
         for partition in PARTITIONS:
             mask = work["partition"].eq(partition).to_numpy()
-            _, scaled_prediction = _predict(model, loaders[partition], device)
+            evaluation_loader = DataLoader(
+                datasets[partition],
+                batch_size=int(config["training"]["batch_size"]),
+                shuffle=False,
+                num_workers=int(config["training"]["num_workers"]),
+            )
+            _, scaled_prediction = _predict(
+                model,
+                evaluation_loader,
+                device,
+                context=(
+                    f"dataset={dataset_name}, split={split_strategy}, seed={seed}, "
+                    f"model={model_spec['name']}, partition={partition}"
+                ),
+            )
             predictions[mask] = target_scaler.inverse_transform(scaled_prediction)
     else:
         raise ValueError(f"Unsupported model family {family!r}")
@@ -339,7 +388,39 @@ def run_one(
     return result_rows, prediction_frame
 
 
-def run_benchmark(config: dict[str, Any], *, dry_run: bool = False) -> pd.DataFrame:
+def _merge_result_rows(
+    existing: list[dict[str, Any]], incoming: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    merged = {tuple(row.get(column) for column in RESULT_KEY): row for row in existing}
+    for row in incoming:
+        merged[tuple(row.get(column) for column in RESULT_KEY)] = row
+    return list(merged.values())
+
+
+def _completed_run_rows(run_dir: Path) -> list[dict[str, Any]] | None:
+    predictions_path = run_dir / "predictions.csv"
+    metadata_path = run_dir / "run_metadata.json"
+    if not (predictions_path.is_file() and metadata_path.is_file()):
+        return None
+    try:
+        predictions = pd.read_csv(predictions_path, usecols=["y_true", "y_pred"])
+        rows = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return None
+    if predictions.empty or not np.isfinite(predictions.to_numpy(dtype=float)).all():
+        return None
+    if (
+        not isinstance(rows, list)
+        or not all(isinstance(row, dict) for row in rows)
+        or {row.get("partition") for row in rows} != set(PARTITIONS)
+    ):
+        return None
+    return rows
+
+
+def run_benchmark(
+    config: dict[str, Any], *, dry_run: bool = False, resume: bool = True
+) -> pd.DataFrame:
     plan = describe_plan(config)
     if dry_run:
         print(json.dumps(plan, indent=2))
@@ -350,15 +431,40 @@ def run_benchmark(config: dict[str, Any], *, dry_run: bool = False) -> pd.DataFr
     (output_root / "software_manifest.json").write_text(
         json.dumps(software_manifest(), indent=2), encoding="utf-8"
     )
-    all_rows: list[dict[str, Any]] = []
-    audits: list[dict[str, Any]] = []
+    metrics_path = output_root / "metrics.csv"
+    audit_path = output_root / "dataset_audit.csv"
+    # Existing records are always preserved. ``resume`` controls only whether
+    # complete selected runs are skipped or recomputed and upserted.
+    all_rows = pd.read_csv(metrics_path).to_dict("records") if metrics_path.is_file() else []
+    audits = pd.read_csv(audit_path).to_dict("records") if audit_path.is_file() else []
     for dataset_name in config["datasets"]:
         frame, audit = load_moleculenet(dataset_name, config["data_root"])
-        audits.append(audit_as_dict(audit))
-        pd.DataFrame(audits).to_csv(output_root / "dataset_audit.csv", index=False)
+        audit_row = audit_as_dict(audit)
+        audits = [row for row in audits if row.get("dataset") != dataset_name]
+        audits.append(audit_row)
+        pd.DataFrame(audits).to_csv(audit_path, index=False)
         for split_strategy in config["split"]["strategies"]:
             for seed in config["split"]["seeds"]:
                 for model_spec in config["models"]:
+                    run_dir = (
+                        output_root
+                        / dataset_name
+                        / split_strategy
+                        / f"seed_{seed}"
+                        / model_spec["name"]
+                    )
+                    completed_rows = _completed_run_rows(run_dir) if resume else None
+                    if completed_rows is not None:
+                        all_rows = _merge_result_rows(all_rows, completed_rows)
+                        print(
+                            f"[skip] dataset={dataset_name} split={split_strategy} "
+                            f"seed={seed} model={model_spec['name']}"
+                        )
+                        continue
+                    print(
+                        f"[run] dataset={dataset_name} split={split_strategy} "
+                        f"seed={seed} model={model_spec['name']}"
+                    )
                     rows, predictions = run_one(
                         frame,
                         dataset_name=dataset_name,
@@ -367,14 +473,7 @@ def run_benchmark(config: dict[str, Any], *, dry_run: bool = False) -> pd.DataFr
                         seed=int(seed),
                         config=config,
                     )
-                    all_rows.extend(rows)
-                    run_dir = (
-                        output_root
-                        / dataset_name
-                        / split_strategy
-                        / f"seed_{seed}"
-                        / model_spec["name"]
-                    )
+                    all_rows = _merge_result_rows(all_rows, rows)
                     run_dir.mkdir(parents=True, exist_ok=True)
                     predictions.to_csv(run_dir / "predictions.csv", index=False)
                     (run_dir / "feature_names.txt").write_text(
@@ -383,5 +482,7 @@ def run_benchmark(config: dict[str, Any], *, dry_run: bool = False) -> pd.DataFr
                     (run_dir / "run_metadata.json").write_text(
                         json.dumps(rows, indent=2), encoding="utf-8"
                     )
-                    pd.DataFrame(all_rows).to_csv(output_root / "metrics.csv", index=False)
+                    pd.DataFrame(all_rows).to_csv(metrics_path, index=False)
+    if all_rows:
+        pd.DataFrame(all_rows).to_csv(metrics_path, index=False)
     return pd.DataFrame(all_rows)

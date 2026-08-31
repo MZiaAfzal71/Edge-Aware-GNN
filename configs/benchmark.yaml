@@ -50,6 +50,7 @@ features:
   max_missing_fraction: 0.10
   variance_threshold: 0.0
   correlation_threshold: 0.95
+  standardized_clip: 10.0
 
 training:
   batch_size: 64

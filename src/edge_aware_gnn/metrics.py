@@ -14,8 +14,15 @@ def regression_metrics(y_true: Iterable[float], y_pred: Iterable[float]) -> dict
     pred = np.asarray(y_pred, dtype=float).reshape(-1)
     if truth.shape != pred.shape:
         raise ValueError(f"Shape mismatch: y_true={truth.shape}, y_pred={pred.shape}")
-    if truth.size < 2 or not (np.isfinite(truth).all() and np.isfinite(pred).all()):
-        raise ValueError("Metrics require at least two finite paired observations")
+    if truth.size < 2:
+        raise ValueError(f"Metrics require at least two paired observations; received {truth.size}")
+    bad_truth = int((~np.isfinite(truth)).sum())
+    bad_pred = int((~np.isfinite(pred)).sum())
+    if bad_truth or bad_pred:
+        raise FloatingPointError(
+            "Metrics received non-finite values: "
+            f"y_true={bad_truth}, y_pred={bad_pred}, n={truth.size}"
+        )
     return {
         "rmse": float(np.sqrt(mean_squared_error(truth, pred))),
         "mae": float(mean_absolute_error(truth, pred)),
@@ -53,4 +60,3 @@ def paired_bootstrap_delta(
         deltas[i] = score(truth[sample], a[sample]) - score(truth[sample], b[sample])
     low, high = np.quantile(deltas, [0.025, 0.975])
     return {"delta": observed, "ci_low": float(low), "ci_high": float(high)}
-

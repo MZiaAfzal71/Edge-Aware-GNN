@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from edge_aware_gnn.data import canonicalize_smiles, make_split
 from edge_aware_gnn.features import BOND_FEATURE_DIM, MolecularFeatureTransformer, bond_features
@@ -46,6 +47,28 @@ def test_train_fitted_descriptor_and_fingerprint_shapes_match():
     assert train.shape[1] == test.shape[1] == len(transformer.feature_names_)
     assert np.isfinite(train).all()
     assert np.isfinite(test).all()
+
+
+class _SyntheticDescriptorTransformer(MolecularFeatureTransformer):
+    def _descriptors(self, smiles):
+        rows = []
+        for value in smiles:
+            if value == "huge":
+                rows.append([1e300, -1e300])
+            else:
+                number = float(value)
+                rows.append([number, number**2])
+        return pd.DataFrame(rows, columns=["linear", "quadratic"])
+
+
+def test_extreme_holdout_descriptors_are_clipped_before_float32_cast():
+    transformer = _SyntheticDescriptorTransformer(
+        "rdkit", standardized_clip=5.0, correlation_threshold=0.999
+    )
+    transformer.fit(["0", "1", "2", "3"])
+    transformed = transformer.transform(["huge"])
+    assert np.isfinite(transformed).all()
+    assert np.abs(transformed).max() <= 5.0
 
 
 def test_bond_vector_dimension():
