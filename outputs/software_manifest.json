@@ -1,0 +1,16 @@
+{
+  "python": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]",
+  "platform": "Linux-6.12.90+-x86_64-with-glibc2.35",
+  "git_commit": "721e3c494613d3aa378fb20e47d69b51245b538e",
+  "packages": {
+    "numpy": "2.0.2",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.6.1",
+    "scipy": "1.16.3",
+    "PyYAML": "6.0.3",
+    "rdkit": "2026.3.5",
+    "torch": "2.10.0+cu128",
+    "torch-geometric": "2.8.0.post1",
+    "xgboost": "3.2.0"
+  }
+}
