@@ -8,5 +8,4 @@ __pycache__/
 .pytest_cache/
 .coverage
 checkpoints/
-publication_outputs/
 *.db

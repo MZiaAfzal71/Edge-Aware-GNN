@@ -1,0 +1,71 @@
+{
+  "datasets": [
+    "esol",
+    "freesolv",
+    "lipophilicity"
+  ],
+  "figure_formats": [
+    "pdf",
+    "png"
+  ],
+  "generated_files": [
+    "figures/applicability_domain.pdf",
+    "figures/applicability_domain.png",
+    "figures/descriptor_retention_stability.pdf",
+    "figures/descriptor_retention_stability.png",
+    "figures/interval_reliability.pdf",
+    "figures/interval_reliability.png",
+    "figures/main_rmse.pdf",
+    "figures/main_rmse.png",
+    "figures/scaffold_generalization_gap.pdf",
+    "figures/scaffold_generalization_gap.png",
+    "figures/specified_rmse_contrasts.pdf",
+    "figures/specified_rmse_contrasts.png",
+    "tables/applicability_domain_summary.csv",
+    "tables/best_models.csv",
+    "tables/dataset_summary.csv",
+    "tables/descriptor_retention_frequency.csv",
+    "tables/feature_engineering_summary.csv",
+    "tables/interval_reliability.csv",
+    "tables/main_performance.csv",
+    "tables/main_performance.tex",
+    "tables/paired_seed_differences.csv",
+    "tables/scaffold_generalization_gap.csv",
+    "tables/specified_contrasts.csv",
+    "tables/specified_contrasts_rmse.tex"
+  ],
+  "inputs": {
+    "analysis/applicability_domain_summary.csv": "1115d4f7f9eaacca8613bfd3f075fbee0d74a450f264bebd4fe491ceaa310c26",
+    "configs/publication.yaml": "5007c80bc343e5ec09c4921f5f9401bbc9371ae1130783030d808b82db98d7aa",
+    "outputs/**/feature_names.txt": "57904a9906ff3b3775870dd4928f380b94fcece87fef058e4bd37a4cb0c4f9fb",
+    "outputs/dataset_audit.csv": "473612631c830a753c17e2f7c30f33b1942d49a44a8661dbcf2a30e781d588d3",
+    "outputs/metrics.csv": "56ed36b9d397bb0cee18ec8eef556175b26dde9d502c451e62af89b63cb79404"
+  },
+  "models": [
+    "mean_baseline",
+    "rf_rdkit",
+    "rf_rdkit_morgan",
+    "xgb_rdkit_morgan",
+    "node_gnn",
+    "edge_gnn",
+    "hybrid_concat",
+    "hybrid_gated"
+  ],
+  "seeds": [
+    2026,
+    2027,
+    2028,
+    2029,
+    2030,
+    2031,
+    2032,
+    2033,
+    2034,
+    2035
+  ],
+  "split_strategies": [
+    "random",
+    "scaffold"
+  ],
+  "test_rows": 480
+}

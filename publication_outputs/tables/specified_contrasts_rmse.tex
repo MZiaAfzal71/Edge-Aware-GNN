@@ -1,0 +1,36 @@
+\begin{tabular}{llllrrr}
+\toprule
+Dataset & Split & Contrast & Favours & $\Delta$RMSE & 95\% CI & $p_{Holm}$ \\
+\midrule
+ESOL & Random & concat\_vs\_edge & Hybrid--concat & -0.100 & [-0.150, -0.051] & 0.0098 \\
+ESOL & Random & edge\_vs\_node & Edge GNN & -0.031 & [-0.060, -0.003] & 0.0977 \\
+ESOL & Random & gated\_vs\_concat & Hybrid--gated & -0.007 & [-0.031, 0.016] & 0.4922 \\
+ESOL & Random & morgan\_vs\_rdkit\_rf & RF--RDKit & 0.045 & [0.029, 0.061] & 0.0098 \\
+ESOL & Random & xgb\_vs\_rf\_morgan & XGB--RDKit+Morgan & -0.101 & [-0.143, -0.060] & 0.0098 \\
+ESOL & Scaffold & concat\_vs\_edge & Hybrid--concat & -0.320 & [-0.413, -0.227] & 0.0098 \\
+ESOL & Scaffold & edge\_vs\_node & Edge GNN & -0.043 & [-0.104, 0.017] & 0.4648 \\
+ESOL & Scaffold & gated\_vs\_concat & Hybrid--gated & -0.004 & [-0.053, 0.045] & 0.6250 \\
+ESOL & Scaffold & morgan\_vs\_rdkit\_rf & RF--RDKit & 0.153 & [0.127, 0.179] & 0.0098 \\
+ESOL & Scaffold & xgb\_vs\_rf\_morgan & XGB--RDKit+Morgan & -0.255 & [-0.302, -0.208] & 0.0098 \\
+FreeSolv & Random & concat\_vs\_edge & Hybrid--concat & -0.241 & [-0.377, -0.105] & 0.0293 \\
+FreeSolv & Random & edge\_vs\_node & Edge GNN & -0.058 & [-0.211, 0.095] & 0.8633 \\
+FreeSolv & Random & gated\_vs\_concat & Hybrid--gated & -0.037 & [-0.131, 0.057] & 0.8633 \\
+FreeSolv & Random & morgan\_vs\_rdkit\_rf & RF--RDKit & 0.223 & [0.176, 0.270] & 0.0098 \\
+FreeSolv & Random & xgb\_vs\_rf\_morgan & XGB--RDKit+Morgan & -0.388 & [-0.492, -0.284] & 0.0098 \\
+FreeSolv & Scaffold & concat\_vs\_edge & Hybrid--concat & -0.652 & [-0.970, -0.335] & 0.0098 \\
+FreeSolv & Scaffold & edge\_vs\_node & Node GNN & 0.027 & [-0.164, 0.217] & 1.0000 \\
+FreeSolv & Scaffold & gated\_vs\_concat & Hybrid--concat & 0.107 & [0.026, 0.188] & 0.0586 \\
+FreeSolv & Scaffold & morgan\_vs\_rdkit\_rf & RF--RDKit & 0.280 & [0.178, 0.382] & 0.0098 \\
+FreeSolv & Scaffold & xgb\_vs\_rf\_morgan & RF--RDKit+Morgan & 0.509 & [0.033, 0.984] & 0.1680 \\
+Lipophilicity & Random & concat\_vs\_edge & Edge GNN & 0.006 & [-0.031, 0.043] & 0.9844 \\
+Lipophilicity & Random & edge\_vs\_node & Edge GNN & -0.014 & [-0.031, 0.004] & 0.3926 \\
+Lipophilicity & Random & gated\_vs\_concat & Hybrid--gated & -0.003 & [-0.013, 0.007] & 0.9844 \\
+Lipophilicity & Random & morgan\_vs\_rdkit\_rf & RF--RDKit & 0.022 & [0.019, 0.025] & 0.0098 \\
+Lipophilicity & Random & xgb\_vs\_rf\_morgan & XGB--RDKit+Morgan & -0.127 & [-0.139, -0.115] & 0.0098 \\
+Lipophilicity & Scaffold & concat\_vs\_edge & Edge GNN & 0.063 & [0.052, 0.073] & 0.0098 \\
+Lipophilicity & Scaffold & edge\_vs\_node & Edge GNN & -0.020 & [-0.032, -0.009] & 0.0098 \\
+Lipophilicity & Scaffold & gated\_vs\_concat & Hybrid--concat & 0.007 & [-0.004, 0.018] & 0.2754 \\
+Lipophilicity & Scaffold & morgan\_vs\_rdkit\_rf & RF--RDKit & 0.029 & [0.023, 0.035] & 0.0098 \\
+Lipophilicity & Scaffold & xgb\_vs\_rf\_morgan & XGB--RDKit+Morgan & -0.126 & [-0.136, -0.115] & 0.0098 \\
+\bottomrule
+\end{tabular}
