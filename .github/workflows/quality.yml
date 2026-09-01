@@ -24,3 +24,9 @@ jobs:
         run: pytest -q
       - name: Validate experiment plan
         run: edgegnn plan --config configs/benchmark.yaml --dataset esol --model rf_rdkit --split random --seed 2026
+      - name: Validate repository and completed results
+        run: edgegnn validate --root .
+      - name: Regenerate publication tables
+        run: |
+          edgegnn publication --tables-only --output /tmp/edgegnn-publication
+          test -s /tmp/edgegnn-publication/analysis_manifest.json
