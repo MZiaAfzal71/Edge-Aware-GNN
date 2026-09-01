@@ -9,10 +9,18 @@ def test_repository_benchmark_configuration_is_valid():
     config = load_config(Path(__file__).parents[1] / "configs" / "benchmark.yaml")
     assert config["datasets"] == ["esol", "freesolv", "lipophilicity"]
     assert config["split"]["fractions"] == [0.70, 0.10, 0.10, 0.10]
+    assert config["features"]["standardized_clip"] == 10.0
 
 
 def test_invalid_split_sum_is_rejected():
     config = load_config(Path(__file__).parents[1] / "configs" / "benchmark.yaml")
     config["split"]["fractions"] = [0.7, 0.1, 0.1, 0.2]
     with pytest.raises(ValueError, match="sum"):
+        validate_config(config)
+
+
+def test_non_positive_descriptor_clip_is_rejected():
+    config = load_config(Path(__file__).parents[1] / "configs" / "benchmark.yaml")
+    config["features"]["standardized_clip"] = 0
+    with pytest.raises(ValueError, match="standardized_clip"):
         validate_config(config)

@@ -128,15 +128,19 @@ class MolecularFeatureTransformer:
         max_missing_fraction: float = 0.10,
         variance_threshold: float = 0.0,
         correlation_threshold: float = 0.95,
+        standardized_clip: float = 10.0,
     ):
         if feature_set not in {"none", "rdkit", "morgan", "rdkit+morgan"}:
             raise ValueError(f"Unknown feature set {feature_set!r}")
+        if standardized_clip <= 0:
+            raise ValueError("standardized_clip must be positive")
         self.feature_set = feature_set
         self.morgan_radius = morgan_radius
         self.morgan_bits = morgan_bits
         self.max_missing_fraction = max_missing_fraction
         self.variance_threshold = variance_threshold
         self.correlation_threshold = correlation_threshold
+        self.standardized_clip = float(standardized_clip)
         self.descriptor_columns_: list[str] = []
         self.correlation_keep_: np.ndarray | None = None
         self.imputer_: SimpleImputer | None = None
@@ -215,12 +219,25 @@ class MolecularFeatureTransformer:
             frame = self._descriptors(values).reindex(columns=self.descriptor_columns_)
             imputed = self.imputer_.transform(frame.to_numpy(dtype=float))
             variable = self.variance_.transform(imputed)
-            blocks.append(self.scaler_.transform(variable[:, self.correlation_keep_]).astype(np.float32))
+            with np.errstate(over="ignore", invalid="ignore"):
+                scaled = self.scaler_.transform(variable[:, self.correlation_keep_])
+            scaled = np.nan_to_num(
+                scaled,
+                nan=0.0,
+                posinf=self.standardized_clip,
+                neginf=-self.standardized_clip,
+            )
+            scaled = np.clip(scaled, -self.standardized_clip, self.standardized_clip)
+            blocks.append(scaled.astype(np.float32))
         if self.uses_morgan:
             blocks.append(self._morgan(values))
         if not blocks:
             return np.empty((len(values), 0), dtype=np.float32)
-        return np.concatenate(blocks, axis=1)
+        result = np.concatenate(blocks, axis=1)
+        if not np.isfinite(result).all():
+            bad = int((~np.isfinite(result)).sum())
+            raise FloatingPointError(f"Molecular feature matrix contains {bad} non-finite values")
+        return result
 
     def fit_transform(self, smiles: Iterable[str]) -> np.ndarray:
         values = list(smiles)

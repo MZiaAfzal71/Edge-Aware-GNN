@@ -23,6 +23,11 @@ def _parser() -> argparse.ArgumentParser:
         command.add_argument("--split", action="append", choices=["random", "scaffold"])
         command.add_argument("--seed", action="append", type=int)
     subparsers.choices["run"].add_argument("--dry-run", action="store_true")
+    subparsers.choices["run"].add_argument(
+        "--restart",
+        action="store_true",
+        help="recompute selected runs instead of skipping complete output directories",
+    )
 
     audit = subparsers.add_parser("audit")
     audit.add_argument("--config", default="configs/benchmark.yaml")
@@ -113,9 +118,12 @@ def main() -> None:
             _, audit = load_moleculenet(dataset, config["data_root"])
             print(json.dumps(audit_as_dict(audit), indent=2))
     elif args.command == "run":
+        if args.dry_run:
+            print(json.dumps(describe_plan(config), indent=2))
+            return
         from .experiment import run_benchmark
 
-        run_benchmark(config, dry_run=args.dry_run)
+        run_benchmark(config, resume=not args.restart)
 
 
 if __name__ == "__main__":
