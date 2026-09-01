@@ -42,6 +42,29 @@ def _parser() -> argparse.ArgumentParser:
     domain.add_argument("--output", default="outputs/analysis")
     domain.add_argument("--radius", type=int, default=2)
     domain.add_argument("--bits", type=int, default=2048)
+
+    publication = subparsers.add_parser(
+        "publication",
+        help="generate manuscript tables and figures from completed benchmark outputs",
+    )
+    publication.add_argument("--metrics", default="outputs/metrics.csv")
+    publication.add_argument("--dataset-audit", default="outputs/dataset_audit.csv")
+    publication.add_argument(
+        "--domain-summary",
+        default="analysis/applicability_domain_summary.csv",
+    )
+    publication.add_argument(
+        "--run-root",
+        default="outputs",
+        help="root containing tracked per-run feature_names.txt files",
+    )
+    publication.add_argument("--spec", default="configs/publication.yaml")
+    publication.add_argument("--output", default="publication_outputs")
+    publication.add_argument(
+        "--tables-only",
+        action="store_true",
+        help="write CSV and LaTeX tables without importing matplotlib",
+    )
     return parser
 
 
@@ -106,6 +129,20 @@ def main() -> None:
             args.root, args.output, radius=args.radius, bits=args.bits
         )
         print(summary.to_string(index=False))
+        return
+    if args.command == "publication":
+        from .publication import generate_publication_analysis
+
+        manifest = generate_publication_analysis(
+            metrics_path=args.metrics,
+            audit_path=args.dataset_audit,
+            domain_path=args.domain_summary,
+            run_root=args.run_root,
+            spec_path=args.spec,
+            output_path=args.output,
+            figures=not args.tables_only,
+        )
+        print(json.dumps(manifest, indent=2))
         return
 
     config = _filter_config(load_config(args.config), args)

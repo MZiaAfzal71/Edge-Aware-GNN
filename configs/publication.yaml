@@ -1,0 +1,43 @@
+# Publication analysis is intentionally separate from model training. The
+# contrasts below follow the architecture and feature-ablation design in
+# docs/RESEARCH_ROADMAP.md; they are specified analyses, not a claim of
+# prospective preregistration.
+primary_metrics: [rmse, mae]
+secondary_metrics: [r2]
+confidence_level: 0.95
+alpha: 0.05
+train_fraction: 0.70
+test_fraction: 0.10
+target_coverage: 0.90
+
+model_order:
+  - mean_baseline
+  - rf_rdkit
+  - rf_rdkit_morgan
+  - xgb_rdkit_morgan
+  - node_gnn
+  - edge_gnn
+  - hybrid_concat
+  - hybrid_gated
+
+contrasts:
+  - id: edge_vs_node
+    model_a: edge_gnn
+    model_b: node_gnn
+    question: Effect of explicit bond-edge attributes
+  - id: concat_vs_edge
+    model_a: hybrid_concat
+    model_b: edge_gnn
+    question: Effect of adding RDKit descriptors to edge-aware GNN
+  - id: gated_vs_concat
+    model_a: hybrid_gated
+    model_b: hybrid_concat
+    question: Effect of gated rather than concatenated fusion
+  - id: morgan_vs_rdkit_rf
+    model_a: rf_rdkit_morgan
+    model_b: rf_rdkit
+    question: Effect of adding Morgan fingerprints to Random Forest
+  - id: xgb_vs_rf_morgan
+    model_a: xgb_rdkit_morgan
+    model_b: rf_rdkit_morgan
+    question: Effect of XGBoost rather than Random Forest

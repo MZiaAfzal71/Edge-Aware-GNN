@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "edge-aware-gnn"
-version = "0.2.2"
+version = "0.3.0"
 description = "Reproducible multi-property molecular benchmarks for edge-aware and descriptor-fused GNNs"
 readme = "ReadMe.md"
 requires-python = ">=3.10"
@@ -21,7 +21,8 @@ dependencies = [
 
 [project.optional-dependencies]
 boosting = ["xgboost>=2,<4"]
-dev = ["pytest>=8,<10", "ruff>=0.6,<1"]
+publication = ["matplotlib>=3.8,<4"]
+dev = ["matplotlib>=3.8,<4", "pytest>=8,<10", "ruff>=0.6,<1"]
 
 [project.scripts]
 edgegnn = "edge_aware_gnn.cli:main"

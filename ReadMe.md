@@ -42,7 +42,9 @@ configs/benchmark.yaml       Full multi-dataset experiment matrix
 src/edge_aware_gnn/          Reusable data, feature, model, metric, and runner code
 tests/                       Fast correctness tests
 docs/                        Manuscript-oriented research roadmap
-outputs/                     Generated metrics and predictions (not committed)
+outputs/                     Completed benchmark metrics, predictions, and provenance
+analysis/                    Compact applicability-domain summary
+configs/publication.yaml     Auditable publication-analysis specification
 ```
 
 ## Installation
@@ -109,6 +111,21 @@ edgegnn domain \
   --output outputs/analysis
 ```
 
+Generate all manuscript tables and figures from the tracked benchmark results:
+
+```bash
+python -m pip install -e '.[publication]'
+edgegnn publication
+```
+
+The command reads `outputs/metrics.csv`, `outputs/dataset_audit.csv`,
+`analysis/applicability_domain_summary.csv`, tracked feature-name files, and
+`configs/publication.yaml`. It writes regenerable
+CSV and LaTeX tables, paired statistical contrasts, and PDF/PNG figures below
+`publication_outputs/`. No model fitting or GPU is required. Use `--tables-only` when matplotlib is
+not installed. See [Publication Analysis](docs/PUBLICATION_ANALYSIS.md) for the complete output
+contract and statistical sign conventions.
+
 Run correctness tests:
 
 ```bash
@@ -117,7 +134,7 @@ pytest -q
 
 ## Output contract
 
-`outputs/metrics.csv` contains one row per dataset, model, split strategy, seed, and partition. It records RMSE, MAE, R2, empirical interval coverage, interval width, runtime, parameter count, and the source Git commit.
+`outputs/metrics.csv` contains one row per dataset, model, split strategy, seed, and partition. It records RMSE, MAE, R2, empirical interval coverage, interval width, runtime, parameter count, and the source Git commit. The completed benchmark tables and per-run predictions are tracked so a clone can reproduce the publication analysis without retraining.
 
 `outputs/software_manifest.json` records the Python, platform, package, and Git versions used by the run.
 
