@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "edge-aware-gnn"
-version = "0.3.0"
+version = "0.3.1"
 description = "Reproducible multi-property molecular benchmarks for edge-aware and descriptor-fused GNNs"
 readme = "ReadMe.md"
 requires-python = ">=3.10"

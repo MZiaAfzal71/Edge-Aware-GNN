@@ -126,6 +126,18 @@ CSV and LaTeX tables, paired statistical contrasts, and PDF/PNG figures below
 not installed. See [Publication Analysis](docs/PUBLICATION_ANALYSIS.md) for the complete output
 contract and statistical sign conventions.
 
+Verify that a clone still contains the complete CLI-only project, 480-run benchmark matrix, compact
+applicability-domain analysis, and publication inputs:
+
+```bash
+edgegnn validate --root .
+```
+
+This check also rejects tracked notebooks, generated package metadata, the large derived
+applicability-domain prediction table, and regenerable publication outputs. See
+[Repository Recovery](docs/REPOSITORY_RECOVERY.md) for the protected structure and safe update
+workflow.
+
 Run correctness tests:
 
 ```bash

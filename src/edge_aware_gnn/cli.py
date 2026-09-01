@@ -65,6 +65,12 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="write CSV and LaTeX tables without importing matplotlib",
     )
+
+    validate = subparsers.add_parser(
+        "validate",
+        help="verify repository structure and completed benchmark artifacts",
+    )
+    validate.add_argument("--root", default=".")
     return parser
 
 
@@ -143,6 +149,11 @@ def main() -> None:
             figures=not args.tables_only,
         )
         print(json.dumps(manifest, indent=2))
+        return
+    if args.command == "validate":
+        from .validation import validate_repository
+
+        print(json.dumps(validate_repository(args.root), indent=2))
         return
 
     config = _filter_config(load_config(args.config), args)
