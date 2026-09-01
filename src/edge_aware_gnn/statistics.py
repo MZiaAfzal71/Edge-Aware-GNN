@@ -6,9 +6,8 @@ from itertools import combinations
 
 import numpy as np
 import pandas as pd
+from scipy.stats import rankdata, wilcoxon
 from scipy.stats import t as student_t
-from scipy.stats import rankdata
-from scipy.stats import wilcoxon
 
 
 def holm_adjust(p_values: list[float]) -> list[float]:

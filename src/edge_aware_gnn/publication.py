@@ -20,7 +20,6 @@ from .statistics import (
     specified_wilcoxon_holm,
 )
 
-
 METRICS = ("rmse", "mae", "r2")
 LOWER_IS_BETTER = {"rmse": True, "mae": True, "r2": False}
 REQUIRED_METRICS = {

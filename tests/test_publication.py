@@ -5,7 +5,6 @@ import yaml
 
 from edge_aware_gnn.publication import generate_publication_analysis
 
-
 MODELS = [
     "mean_baseline",
     "rf_rdkit",
