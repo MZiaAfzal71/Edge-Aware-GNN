@@ -7,9 +7,6 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .coverage
-data/raw/
-data/processed/
-outputs/
 checkpoints/
 *.db
 
